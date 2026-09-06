@@ -30,7 +30,7 @@ const contactData = {
   firstName: 'Edson',
   lastName: 'Garcia',
   fullName: 'Edson Garcia',
-  title: 'Ingeniero en Informática / Fullstack / Freelancer',
+  title: 'Ingeniero en Informatica / Fullstack / Freelancer',
   org: 'WebTechCrafter',
   email: 'edson.garcia.cr@outlook.com',
   phone: '+50670635689',
