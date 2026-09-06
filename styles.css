@@ -203,6 +203,14 @@ h1 {
   color: var(--text);
 }
 
+.btn-vcard {
+  background: rgba(61, 217, 179, 0.1);
+  border: 1px solid rgba(61, 217, 179, 0.35);
+  color: #aaf7df;
+  cursor: pointer;
+  font: inherit;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(110px, 1fr));
