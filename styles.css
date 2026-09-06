@@ -182,8 +182,9 @@ h1 {
   font-weight: 700;
   text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  flex: 1 1 180px;
-  max-width: 220px;
+  flex: 1 1 0;
+  min-width: 170px;
+  white-space: nowrap;
 }
 
 .btn:hover,
@@ -209,6 +210,12 @@ h1 {
   color: #aaf7df;
   cursor: pointer;
   font: inherit;
+}
+
+.btn-vcard-outlook {
+  background: rgba(124, 156, 255, 0.1);
+  border-color: rgba(124, 156, 255, 0.35);
+  color: #c9d7ff;
 }
 
 .stats-grid {
@@ -366,7 +373,7 @@ h1 {
 
   .btn {
     width: 100%;
-    max-width: none;
+    min-width: 0;
   }
 
   .footer-row {

@@ -49,7 +49,7 @@ function escapeVcardValue(value) {
     .replace(/\r?\n/g, '\\n');
 }
 
-function buildVcard(data) {
+function buildVcard(data, { withBom = false } = {}) {
   const v = escapeVcardValue;
 const lines = [
     'BEGIN:VCARD',
@@ -66,41 +66,59 @@ const lines = [
     'END:VCARD'
   ];
 
-  // BOM UTF-8 obligatorio para que Outlook lea bien los acentos; CRLF según RFC 2426
-  return '\uFEFF' + lines.join('\r\n');
+  // CRLF según RFC 2426. El BOM solo para Outlook: iOS/Android tienen parsers
+  // estrictos que rechazan el archivo si no empieza exactamente con "BEGIN:VCARD".
+  return (withBom ? '\uFEFF' : '') + lines.join('\r\n');
 }
 
-const vcardButton = document.getElementById('download-vcard');
-if (vcardButton) {
-  vcardButton.addEventListener('click', () => {
+function downloadVcard(filename, vcardContent) {
+  const blob = new Blob([vcardContent], { type: 'text/vcard;charset=utf-8' });
+  const blobUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(blobUrl);
+  }, 1500);
+}
+
+function showFeedback(button) {
+  const originalText = button.dataset.originalText || button.textContent;
+  button.dataset.originalText = originalText;
+  button.textContent = '¡Descargado!';
+  setTimeout(() => {
+    button.textContent = originalText;
+  }, 1400);
+}
+
+// Móvil: sin BOM. iOS no "descarga": abre el .vcf en pestaña nueva y ofrece
+// "Agregar a contactos" nativamente. Android Chrome sí respeta el download.
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+const vcardMobileButton = document.getElementById('download-vcard');
+if (vcardMobileButton) {
+  vcardMobileButton.addEventListener('click', () => {
     const vcardContent = buildVcard(contactData);
-    const blob = new Blob([vcardContent], { type: 'text/vcard;charset=utf-8' });
-    const blobUrl = URL.createObjectURL(blob);
 
-    // Estrategia 1: descarga con atributo download (Android Chrome, desktop)
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = 'edson-garcia.vcf';
-    document.body.appendChild(link);
-    link.click();
+    if (isIOS) {
+      const blob = new Blob([vcardContent], { type: 'text/vcard;charset=utf-8' });
+      window.open(URL.createObjectURL(blob), '_blank');
+    } else {
+      downloadVcard('edson-garcia.vcf', vcardContent);
+    }
 
-    // Estrategia 2 (fallback iOS Safari): abrir el vCard directo —
-    // iOS lo interpreta como "Agregar a contactos" sin descargar.
-    // Se hace con delay para no bloquear la descarga anterior.
-    setTimeout(() => {
-      window.open(blobUrl, '_blank');
-    }, 300);
+    showFeedback(vcardMobileButton);
+  });
+}
 
-    // Limpieza del blob URL y nodo temporal
-    setTimeout(() => {
-      link.remove();
-      URL.revokeObjectURL(blobUrl);
-    }, 1500);
-
-    const originalText = vcardButton.textContent;
-    vcardButton.textContent = '¡Descargado!';
-    setTimeout(() => {
-      vcardButton.textContent = originalText;
-    }, 1400);
+// Outlook de escritorio: con BOM, siempre descarga.
+const vcardOutlookButton = document.getElementById('download-vcard-outlook');
+if (vcardOutlookButton) {
+  vcardOutlookButton.addEventListener('click', () => {
+    downloadVcard('edson-garcia-outlook.vcf', buildVcard(contactData, { withBom: true }));
+    showFeedback(vcardOutlookButton);
   });
 }
