@@ -66,31 +66,36 @@ const lines = [
     'END:VCARD'
   ];
 
-  // Unir con CRLF según la norma RFC
-  return lines.join('\r\n');
+  // BOM UTF-8 obligatorio para que Outlook lea bien los acentos; CRLF según RFC 2426
+  return '\uFEFF' + lines.join('\r\n');
 }
 
 const vcardButton = document.getElementById('download-vcard');
 if (vcardButton) {
   vcardButton.addEventListener('click', () => {
     const vcardContent = buildVcard(contactData);
+    const blob = new Blob([vcardContent], { type: 'text/vcard;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(blob);
 
-    // Convertir el texto vCard a Base64 para compatibilidad universal en móviles
-    // unescape(encodeURIComponent()) asegura el manejo correcto de caracteres con acentos
-    const base64Vcard = btoa(unescape(encodeURIComponent(vcardContent)));
-    const dataUrl = `data:text/x-vcard;charset=utf-8;base64,${base64Vcard}`;
-
+    // Estrategia 1: descarga con atributo download (Android Chrome, desktop)
     const link = document.createElement('a');
-    link.href = dataUrl;
+    link.href = blobUrl;
     link.download = 'edson-garcia.vcf';
-
     document.body.appendChild(link);
     link.click();
-    
-    // Limpieza rápida del nodo temporal
+
+    // Estrategia 2 (fallback iOS Safari): abrir el vCard directo —
+    // iOS lo interpreta como "Agregar a contactos" sin descargar.
+    // Se hace con delay para no bloquear la descarga anterior.
+    setTimeout(() => {
+      window.open(blobUrl, '_blank');
+    }, 300);
+
+    // Limpieza del blob URL y nodo temporal
     setTimeout(() => {
       link.remove();
-    }, 100);
+      URL.revokeObjectURL(blobUrl);
+    }, 1500);
 
     const originalText = vcardButton.textContent;
     vcardButton.textContent = '¡Descargado!';
