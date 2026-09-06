@@ -28,11 +28,11 @@ if (copyButton) {
 // Única fuente de verdad de los datos de contacto.
 const contactData = {
   firstName: 'Edson',
-  lastName: 'García',
-  fullName: 'Edson García',
+  lastName: 'Garcia',
+  fullName: 'Edson Garcia',
   title: 'Ingeniero en Informática / Fullstack / Freelancer',
   org: 'WebTechCrafter',
-  email: 'edson.garcia@webtechcrafter.com',
+  email: 'edson.garcia.cr@outlook.com',
   phone: '+50670635689',
   city: 'San José',
   country: 'Costa Rica',
@@ -40,9 +40,9 @@ const contactData = {
   note: 'Desarrollador web enfocado en interfaces limpias, rápidas y orientadas a resultados.',
 };
 
-// RFC 2426: los valores deben escapar \ ; , y saltos de línea.
+// RFC 2426 / vCard 3.0: Escapar caracteres especiales
 function escapeVcardValue(value) {
-  return String(value)
+  return String(value || '')
     .replace(/\\/g, '\\\\')
     .replace(/;/g, '\\;')
     .replace(/,/g, '\\,')
@@ -51,7 +51,7 @@ function escapeVcardValue(value) {
 
 function buildVcard(data) {
   const v = escapeVcardValue;
-  const lines = [
+const lines = [
     'BEGIN:VCARD',
     'VERSION:3.0',
     `N:${v(data.lastName)};${v(data.firstName)};;;`,
@@ -60,29 +60,36 @@ function buildVcard(data) {
     `ORG:${v(data.org)}`,
     `EMAIL;TYPE=INTERNET,WORK:${v(data.email)}`,
     `TEL;TYPE=CELL,VOICE:${v(data.phone)}`,
-    `ADR;TYPE=HOME:;;${v(data.city)};;;${v(data.country)}`,
+    `ADR;TYPE=WORK:;;;${v(data.city)};;;${v(data.country)}`,
     `URL:${v(data.url)}`,
     `NOTE:${v(data.note)}`,
-    'END:VCARD',
+    'END:VCARD'
   ];
-  // El RFC exige CRLF; el BOM UTF-8 evita que Outlook rompa los acentos.
-  return '\uFEFF' + lines.join('\r\n');
+
+  // Unir con CRLF según la norma RFC
+  return lines.join('\r\n');
 }
 
 const vcardButton = document.getElementById('download-vcard');
 if (vcardButton) {
   vcardButton.addEventListener('click', () => {
-    const blob = new Blob([buildVcard(contactData)], {
-      type: 'text/vcard;charset=utf-8',
+    // Definición explícita de MIME para máxima compatibilidad con móviles y escritorio
+    const vcardString = buildVcard(contactData);
+    const blob = new Blob([vcardString], {
+      type: 'text/vcard;charset=utf-8;'
     });
+
     const blobUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = blobUrl;
     link.download = 'edson-garcia.vcf';
+    
     document.body.appendChild(link);
     link.click();
     link.remove();
-    URL.revokeObjectURL(blobUrl);
+    
+    // Limpieza de la URL en memoria
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
 
     const originalText = vcardButton.textContent;
     vcardButton.textContent = '¡Descargado!';
