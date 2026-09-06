@@ -73,23 +73,24 @@ const lines = [
 const vcardButton = document.getElementById('download-vcard');
 if (vcardButton) {
   vcardButton.addEventListener('click', () => {
-    // Definición explícita de MIME para máxima compatibilidad con móviles y escritorio
-    const vcardString = buildVcard(contactData);
-    const blob = new Blob([vcardString], {
-      type: 'text/vcard;charset=utf-8;'
-    });
+    const vcardContent = buildVcard(contactData);
 
-    const blobUrl = URL.createObjectURL(blob);
+    // Convertir el texto vCard a Base64 para compatibilidad universal en móviles
+    // unescape(encodeURIComponent()) asegura el manejo correcto de caracteres con acentos
+    const base64Vcard = btoa(unescape(encodeURIComponent(vcardContent)));
+    const dataUrl = `data:text/x-vcard;charset=utf-8;base64,${base64Vcard}`;
+
     const link = document.createElement('a');
-    link.href = blobUrl;
+    link.href = dataUrl;
     link.download = 'edson-garcia.vcf';
-    
+
     document.body.appendChild(link);
     link.click();
-    link.remove();
     
-    // Limpieza de la URL en memoria
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+    // Limpieza rápida del nodo temporal
+    setTimeout(() => {
+      link.remove();
+    }, 100);
 
     const originalText = vcardButton.textContent;
     vcardButton.textContent = '¡Descargado!';
